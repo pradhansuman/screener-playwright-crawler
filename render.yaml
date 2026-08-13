@@ -1,0 +1,24 @@
+# Render Blueprint — Screener Playwright Crawler
+# Deploy: connect this repo on Render → "Blueprint" → auto-reads render.yaml
+
+services:
+  # Web service: 14-step E2E testing pipeline as an HTTP API
+  - type: web
+    name: screener-pipeline
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
+
+  # Cron job: run the pipeline on a schedule (e.g. nightly regression)
+  - type: cron
+    name: screener-nightly
+    runtime: docker
+    plan: free
+    schedule: "0 2 * * *"   # 2:00 AM UTC daily
+    dockerfilePath: ./Dockerfile
+    buildCommand: npx tsc
+    startCommand: node dist/index.js --mode full --url https://demoqa.com --max-pages 10
