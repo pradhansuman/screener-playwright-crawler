@@ -1,5 +1,9 @@
 # Render Blueprint — Screener Playwright Crawler
-# Deploy: connect this repo on Render → "Blueprint" → auto-reads render.yaml
+# Deploy: connect this repo on Render → "New Blueprint" → auto-reads render.yaml
+#
+# NOTE: Cron jobs require a paid Render plan (free plan supports web services
+# but NOT cron jobs). If you don't have a paid plan, remove the cron service
+# below or upgrade your Render plan.
 
 services:
   # Web service: 14-step E2E testing pipeline as an HTTP API
@@ -14,11 +18,15 @@ services:
     healthCheckPath: /health
 
   # Cron job: run the pipeline on a schedule (e.g. nightly regression)
+  # Paid plan required. Uses Dockerfile.cron (docker runtime cannot use
+  # startCommand — the entry command lives in the Dockerfile CMD).
   - type: cron
     name: screener-nightly
     runtime: docker
-    plan: free
     schedule: "0 2 * * *"   # 2:00 AM UTC daily
-    dockerfilePath: ./Dockerfile
-    buildCommand: npx tsc
-    startCommand: node dist/index.js --mode full --url https://demoqa.com --max-pages 10
+    dockerfilePath: ./Dockerfile.cron
+    envVars:
+      - key: SEED_URL
+        value: https://demoqa.com
+      - key: MAX_PAGES
+        value: "10"
